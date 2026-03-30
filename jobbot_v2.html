@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobBot — Assistant Candidature</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0d0d14;
+  --ink2: #171724;
+  --ink3: #21213a;
+  --wire: #2e2e50;
+  --wire2: #3d3d68;
+  --neon: #7c6dfa;
+  --neon2: #fa6d9a;
+  --neon3: #6dfac8;
+  --neon4: #fac96d;
+  --fg: #e4e4f4;
+  --fg2: #9898bb;
+  --fg3: #6060a0;
+  --r: 14px;
+  --r2: 10px;
+  --r3: 7px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Cabinet Grotesk',sans-serif;
+  background:var(--ink);
+  color:var(--fg);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* BG grid */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(124,109,250,0.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(124,109,250,0.04) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;
+  z-index:0;
+}
+body::after{
+  content:'';
+  position:fixed;
+  inset:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 15% 10%,rgba(124,109,250,0.12) 0%,transparent 70%),
+    radial-gradient(ellipse 50% 40% at 85% 85%,rgba(250,109,154,0.08) 0%,transparent 70%);
+  pointer-events:none;
+  z-index:0;
+}
+
+.app{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:36px 20px 80px}
+
+/* ─── Header ─── */
+header{margin-bottom:44px;text-align:center}
+.hdr-inner{display:inline-flex;flex-direction:column;align-items:center;gap:8px}
+.logo-row{display:flex;align-items:center;gap:14px}
+.bot-icon{
+  width:52px;height:52px;border-radius:16px;
+  background:linear-gradient(135deg,var(--neon),var(--neon2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;
+  box-shadow:0 0 40px rgba(124,109,250,0.45),inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.brand{
+  font-family:'Clash Display',sans-serif;
+  font-size:2.8rem;font-weight:700;letter-spacing:-1.5px;
+  background:linear-gradient(135deg,var(--fg) 40%,var(--neon));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.brand em{font-style:normal;color:var(--neon2);-webkit-text-fill-color:var(--neon2)}
+.tagline{font-size:.92rem;color:var(--fg2);letter-spacing:.3px}
+.tagline span{color:var(--fg3);margin:0 4px}
+
+/* ─── API key bar ─── */
+.api-bar{
+  display:flex;align-items:center;gap:10px;
+  background:var(--ink2);border:1px solid var(--wire);
+  border-radius:var(--r2);padding:10px 14px;margin-bottom:28px;
+}
+.api-bar label{font-size:.8rem;color:var(--fg2);white-space:nowrap;font-weight:500}
+.api-bar input{
+  flex:1;background:var(--ink3);border:1px solid var(--wire);
+  border-radius:6px;padding:7px 10px;color:var(--fg);font-family:monospace;font-size:.82rem;
+  outline:none;transition:border .2s
+}
+.api-bar input:focus{border-color:var(--neon)}
+.api-status{
+  display:flex;align-items:center;gap:5px;font-size:.78rem;white-space:nowrap;
+  color:var(--fg3)
+}
+.api-status.ok{color:var(--neon3)}
+.api-dot{width:7px;height:7px;border-radius:50%;background:var(--fg3)}
+.api-status.ok .api-dot{background:var(--neon3);box-shadow:0 0 8px var(--neon3)}
+
+/* ─── Tabs ─── */
+.tabs{
+  display:flex;gap:3px;
+  background:var(--ink2);border:1px solid var(--wire);
+  border-radius:var(--r);padding:4px;margin-bottom:28px;
+}
+.tab-btn{
+  flex:1;padding:10px 12px;border:none;border-radius:var(--r2);
+  background:transparent;color:var(--fg2);
+  font-family:'Cabinet Grotesk',sans-serif;font-size:.88rem;font-weight:500;
+  cursor:pointer;transition:all .2s;white-space:nowrap;
+}
+.tab-btn.active{
+  background:var(--ink3);color:var(--fg);
+  box-shadow:0 2px 12px rgba(0,0,0,.35);
+}
+.tab-btn:hover:not(.active){color:var(--fg)}
+.tab-btn .t-icon{margin-right:5px}
+.tab-panel{display:none}
+.tab-panel.active{display:block;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── Cards ─── */
+.card{
+  background:var(--ink2);border:1px solid var(--wire);
+  border-radius:var(--r);padding:22px;margin-bottom:18px;
+}
+.card-hd{
+  display:flex;align-items:center;gap:8px;
+  font-family:'Clash Display',sans-serif;font-size:1rem;font-weight:600;
+  margin-bottom:18px;
+}
+.card-hd .tag{
+  font-family:'Cabinet Grotesk',sans-serif;
+  font-size:.72rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+  background:rgba(124,109,250,.12);color:var(--neon);
+  padding:2px 8px;border-radius:20px;border:1px solid rgba(124,109,250,.2);
+}
+
+/* ─── Upload zone ─── */
+.drop-zone{
+  border:2px dashed var(--wire);border-radius:var(--r2);
+  padding:40px 20px;text-align:center;cursor:pointer;position:relative;
+  transition:all .25s;
+}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--neon);background:rgba(124,109,250,.05)}
+.drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop-icon{font-size:2.4rem;margin-bottom:10px}
+.drop-zone p{color:var(--fg2);font-size:.88rem}
+.drop-zone strong{color:var(--neon)}
+
+/* CV loaded strip */
+.cv-strip{
+  display:none;align-items:center;gap:14px;
+  background:rgba(109,250,200,.06);border:1px solid rgba(109,250,200,.18);
+  border-radius:var(--r2);padding:14px 16px;margin-top:14px;
+}
+.cv-strip.show{display:flex}
+.cv-strip-ico{font-size:1.8rem}
+.cv-strip-info{flex:1}
+.cv-strip-name{font-weight:700;font-size:.92rem}
+.cv-strip-status{font-size:.78rem;color:var(--neon3);margin-top:2px}
+.btn-x{background:none;border:none;color:var(--fg3);cursor:pointer;font-size:1.1rem;padding:4px;transition:color .2s}
+.btn-x:hover{color:var(--neon2)}
+
+/* ─── Profile grid ─── */
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+@media(max-width:640px){.profile-grid{grid-template-columns:1fr}}
+.profile-block{}
+.profile-label{
+  font-size:.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--fg3);margin-bottom:8px;
+}
+.profile-name{font-family:'Clash Display',sans-serif;font-size:1.4rem;font-weight:600;color:var(--neon)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.chip{
+  display:inline-flex;align-items:center;
+  padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:500;
+}
+.chip-tech{background:rgba(124,109,250,.1);color:var(--neon);border:1px solid rgba(124,109,250,.2)}
+.chip-lang{background:rgba(109,250,200,.1);color:var(--neon3);border:1px solid rgba(109,250,200,.2)}
+.chip-soft{background:rgba(250,201,109,.1);color:var(--neon4);border:1px solid rgba(250,201,109,.2)}
+.exp-list{list-style:none}
+.exp-item{
+  font-size:.84rem;color:var(--fg2);padding:5px 0;
+  border-bottom:1px solid var(--wire);
+}
+.exp-item:last-child{border:none}
+.exp-item::before{content:'▸ ';color:var(--neon);font-size:.7rem}
+.profile-summary{
+  grid-column:1/-1;font-size:.88rem;line-height:1.7;color:var(--fg2);
+  background:var(--ink3);border-radius:var(--r2);padding:14px;
+  border-left:3px solid var(--neon);
+}
+
+/* ─── Search ─── */
+.search-row{display:flex;gap:8px;margin-bottom:0}
+.inp{
+  background:var(--ink3);border:1px solid var(--wire);border-radius:var(--r2);
+  padding:11px 14px;color:var(--fg);font-family:'Cabinet Grotesk',sans-serif;
+  font-size:.88rem;outline:none;transition:border .2s;
+}
+.inp:focus{border-color:var(--neon)}
+.inp::placeholder{color:var(--fg3)}
+.inp-q{flex:1}
+.inp-loc{width:180px}
+@media(max-width:600px){.search-row{flex-wrap:wrap}.inp-loc{width:100%}}
+
+/* ─── Buttons ─── */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:11px 20px;border-radius:var(--r2);border:none;cursor:pointer;
+  font-family:'Cabinet Grotesk',sans-serif;font-size:.88rem;font-weight:700;
+  transition:all .2s;text-decoration:none;white-space:nowrap;
+}
+.btn-neon{
+  background:linear-gradient(135deg,var(--neon),#a78bfa);
+  color:#fff;box-shadow:0 4px 20px rgba(124,109,250,.3);
+}
+.btn-neon:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 24px rgba(124,109,250,.45)}
+.btn-neon:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn-ghost{background:var(--ink3);color:var(--fg2);border:1px solid var(--wire)}
+.btn-ghost:hover{border-color:var(--neon);color:var(--neon)}
+.btn-green{background:linear-gradient(135deg,var(--neon3),#00d9a0);color:var(--ink);font-weight:800}
+.btn-green:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px rgba(109,250,200,.3)}
+.btn-sm{padding:7px 13px;font-size:.8rem;border-radius:var(--r3)}
+.btn-xs{padding:5px 10px;font-size:.75rem;border-radius:6px}
+
+/* ─── Job card ─── */
+.jobs-grid{display:grid;gap:12px}
+.jc{
+  background:var(--ink2);border:1px solid var(--wire);border-radius:var(--r);
+  padding:18px;transition:all .2s;position:relative;overflow:hidden;
+}
+.jc::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--neon),var(--neon2));
+  opacity:0;transition:opacity .2s;
+}
+.jc:hover{border-color:rgba(124,109,250,.35);transform:translateY(-2px)}
+.jc:hover::after{opacity:1}
+.jc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.jc-left{flex:1}
+.jc-title{font-family:'Clash Display',sans-serif;font-size:1rem;font-weight:600}
+.jc-company{color:var(--neon);font-size:.84rem;font-weight:500;margin-top:2px}
+.jc-meta{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
+.badge{
+  display:inline-flex;align-items:center;gap:3px;
+  padding:3px 9px;border-radius:20px;font-size:.73rem;font-weight:500;
+}
+.b-loc{background:rgba(124,109,250,.1);color:var(--neon);border:1px solid rgba(124,109,250,.18)}
+.b-date{background:rgba(122,122,154,.1);color:var(--fg3);border:1px solid var(--wire)}
+.b-sal{background:rgba(109,250,200,.1);color:var(--neon3);border:1px solid rgba(109,250,200,.18)}
+.jc-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.jc-snippet{font-size:.82rem;color:var(--fg2);line-height:1.6;margin-top:8px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* Score ring */
+.score-ring{
+  width:52px;height:52px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Clash Display',sans-serif;font-size:.85rem;font-weight:700;
+  border:2px solid;
+}
+.sr-hi{background:rgba(109,250,200,.1);color:var(--neon3);border-color:rgba(109,250,200,.3)}
+.sr-md{background:rgba(250,201,109,.1);color:var(--neon4);border-color:rgba(250,201,109,.3)}
+.sr-lo{background:rgba(250,109,154,.1);color:var(--neon2);border-color:rgba(250,109,154,.3)}
+
+/* ─── Result panel ─── */
+.res-panel{
+  background:var(--ink3);border:1px solid var(--wire);border-radius:var(--r2);
+  padding:18px;margin-top:14px;display:none;
+}
+.res-panel.show{display:block;animation:fadeUp .3s ease}
+.res-sec{margin-bottom:18px}
+.res-lbl{
+  font-size:.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--fg3);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;
+}
+.res-box{
+  background:var(--ink2);border:1px solid var(--wire);border-radius:var(--r3);
+  padding:13px;font-size:.85rem;line-height:1.75;color:var(--fg);
+  white-space:pre-wrap;max-height:280px;overflow-y:auto;
+}
+.match-list{list-style:none}
+.match-li{
+  display:flex;align-items:flex-start;gap:8px;padding:6px 0;
+  font-size:.85rem;border-bottom:1px solid var(--wire);
+}
+.match-li:last-child{border:none}
+.mdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.mdot-y{background:var(--neon3)}
+.mdot-n{background:var(--neon2)}
+
+/* ─── Email preview ─── */
+.email-prev{
+  background:var(--ink2);border:1px solid var(--wire);border-radius:var(--r3);
+  padding:14px;font-size:.84rem;margin-top:8px;
+}
+.email-row{display:flex;gap:8px;margin-bottom:7px;align-items:flex-start}
+.email-lbl{color:var(--fg3);min-width:55px;font-size:.78rem;padding-top:2px}
+.email-val{color:var(--fg);flex:1}
+.email-body{
+  border-top:1px solid var(--wire);padding-top:12px;margin-top:8px;
+  line-height:1.7;color:var(--fg2);white-space:pre-wrap;
+  max-height:200px;overflow-y:auto;font-size:.83rem;
+}
+
+/* ─── Pipeline / Kanban ─── */
+.pipeline{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:700px){.pipeline{grid-template-columns:1fr 1fr}}
+@media(max-width:400px){.pipeline{grid-template-columns:1fr}}
+.pipe-col{
+  background:var(--ink2);border:1px solid var(--wire);
+  border-radius:var(--r);padding:14px;min-height:120px;
+}
+.pipe-col-hd{
+  display:flex;align-items:center;gap:7px;margin-bottom:12px;
+  font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+}
+.pipe-dot{width:8px;height:8px;border-radius:50%}
+.pipe-count{
+  margin-left:auto;background:var(--wire);
+  color:var(--fg2);font-size:.72rem;padding:1px 6px;border-radius:10px;
+}
+.cand-card{
+  background:var(--ink3);border:1px solid var(--wire);border-radius:var(--r3);
+  padding:10px 12px;margin-bottom:8px;cursor:grab;transition:all .2s;
+  position:relative;
+}
+.cand-card:hover{border-color:var(--wire2)}
+.cand-card-title{font-size:.83rem;font-weight:600;margin-bottom:2px;padding-right:20px}
+.cand-card-co{font-size:.75rem;color:var(--neon);margin-bottom:4px}
+.cand-card-date{font-size:.72rem;color:var(--fg3)}
+.cand-del{
+  position:absolute;top:8px;right:8px;
+  background:none;border:none;color:var(--wire2);cursor:pointer;font-size:.85rem;
+  transition:color .2s;
+}
+.cand-del:hover{color:var(--neon2)}
+.score-mini{
+  display:inline-block;font-size:.72rem;font-weight:700;
+  padding:1px 7px;border-radius:10px;margin-top:4px;
+}
+.sm-hi{background:rgba(109,250,200,.1);color:var(--neon3)}
+.sm-md{background:rgba(250,201,109,.1);color:var(--neon4)}
+.sm-lo{background:rgba(250,109,154,.1);color:var(--neon2)}
+.add-cand-btn{
+  width:100%;background:none;border:1px dashed var(--wire);
+  border-radius:var(--r3);padding:8px;color:var(--fg3);
+  font-family:'Cabinet Grotesk',sans-serif;font-size:.8rem;
+  cursor:pointer;transition:all .2s;
+}
+.add-cand-btn:hover{border-color:var(--neon);color:var(--neon)}
+
+/* Stats row */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+@media(max-width:600px){.stats-row{grid-template-columns:1fr 1fr}}
+.stat-box{
+  background:var(--ink2);border:1px solid var(--wire);border-radius:var(--r);
+  padding:16px;text-align:center;
+}
+.stat-num{font-family:'Clash Display',sans-serif;font-size:1.9rem;font-weight:700;color:var(--neon)}
+.stat-lbl{font-size:.75rem;color:var(--fg3);margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
+
+/* ─── Paste ─── */
+.textarea{
+  width:100%;background:var(--ink3);border:1px solid var(--wire);
+  border-radius:var(--r2);padding:13px;color:var(--fg);
+  font-family:'Cabinet Grotesk',sans-serif;font-size:.87rem;
+  resize:vertical;min-height:150px;outline:none;transition:border .2s;
+  line-height:1.6;
+}
+.textarea:focus{border-color:var(--neon)}
+.textarea::placeholder{color:var(--fg3)}
+
+/* ─── Loading ─── */
+.loading{
+  display:none;align-items:center;gap:11px;
+  padding:14px 0;color:var(--fg2);font-size:.88rem;
+}
+.loading.show{display:flex}
+.spin{
+  width:18px;height:18px;border:2px solid var(--wire2);
+  border-top-color:var(--neon);border-radius:50%;
+  animation:rotate .75s linear infinite;flex-shrink:0;
+}
+@keyframes rotate{to{transform:rotate(360deg)}}
+
+/* Tips */
+.tips-grid{display:grid;gap:6px;margin-top:2px}
+.tip-item{
+  font-size:.83rem;padding:6px 10px;
+  background:rgba(124,109,250,.05);border-radius:6px;
+  color:var(--fg2);border-left:2px solid var(--neon);
+}
+
+/* Empty */
+.empty{text-align:center;padding:50px 20px;color:var(--fg3)}
+.empty .ei{font-size:2.8rem;margin-bottom:12px;opacity:.5}
+.empty p{font-size:.9rem}
+
+/* Settings */
+.srow{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:13px 0;border-bottom:1px solid var(--wire);
+}
+.srow:last-child{border:none}
+.slabel{font-size:.88rem;font-weight:500}
+.sdesc{font-size:.77rem;color:var(--fg3);margin-top:2px}
+.tog{
+  width:42px;height:23px;border-radius:12px;background:var(--wire);
+  border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;
+}
+.tog.on{background:var(--neon)}
+.tog::after{
+  content:'';position:absolute;width:17px;height:17px;border-radius:50%;
+  background:#fff;top:3px;left:3px;transition:left .2s;
+}
+.tog.on::after{left:22px}
+.inp-sm{
+  background:var(--ink3);border:1px solid var(--wire);border-radius:7px;
+  padding:7px 11px;color:var(--fg);font-family:'Cabinet Grotesk',sans-serif;
+  font-size:.83rem;outline:none;width:200px;
+}
+.inp-sm:focus{border-color:var(--neon)}
+
+/* Modal */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:100;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.modal-overlay.show{display:flex}
+.modal{
+  background:var(--ink2);border:1px solid var(--wire2);border-radius:var(--r);
+  padding:28px;max-width:520px;width:90%;max-height:85vh;overflow-y:auto;
+  animation:fadeUp .3s ease;
+}
+.modal-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-family:'Clash Display',sans-serif;font-size:1.1rem;font-weight:600}
+
+/* Notification dot */
+.ndot{
+  display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:var(--neon2);margin-left:5px;vertical-align:middle;
+  animation:ndotpulse 1.5s infinite;
+}
+@keyframes ndotpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+
+/* Scroll */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--ink2)}
+::-webkit-scrollbar-thumb{background:var(--wire2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--neon)}
+
+/* Responsive */
+@media(max-width:640px){
+  .brand{font-size:2rem}
+  .tabs{flex-wrap:wrap}
+  .tab-btn{flex:0 0 calc(50% - 2px)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="hdr-inner">
+      <div class="logo-row">
+        <div class="bot-icon">🤖</div>
+        <div class="brand">Job<em>Bot</em></div>
+      </div>
+      <div class="tagline">Recherche <span>·</span> Analyse <span>·</span> Adapte <span>·</span> Génère <span>·</span> Suit</div>
+    </div>
+  </header>
+
+  <!-- API KEY BAR -->
+  <div class="api-bar">
+    <label>🔑 Clé Anthropic</label>
+    <input type="password" id="api-key" placeholder="sk-ant-..." oninput="checkApiKey()" autocomplete="off">
+    <div class="api-status" id="api-status">
+      <div class="api-dot"></div>
+      <span>Non connecté</span>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('cv')"><span class="t-icon">📄</span>Mon CV</button>
+    <button class="tab-btn" id="tab-btn-search" onclick="switchTab('search')"><span class="t-icon">🔍</span>Offres<span class="ndot" id="ndot" style="display:none"></span></button>
+    <button class="tab-btn" onclick="switchTab('paste')"><span class="t-icon">📋</span>Annonce</button>
+    <button class="tab-btn" onclick="switchTab('pipeline')"><span class="t-icon">📊</span>Pipeline</button>
+    <button class="tab-btn" onclick="switchTab('settings')"><span class="t-icon">⚙️</span>Paramètres</button>
+  </div>
+
+  <!-- ═══════════════ TAB CV ═══════════════ -->
+  <div class="tab-panel active" id="tab-cv">
+    <div class="card">
+      <div class="card-hd">📄 Uploade ton CV <span class="tag">PDF · Image · Word</span></div>
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" id="cv-file" accept=".pdf,.doc,.docx,image/*" onchange="handleCV(this)">
+        <div class="drop-icon">📁</div>
+        <p><strong>Clique ou glisse ton CV ici</strong></p>
+        <p style="margin-top:6px;font-size:.79rem">PDF, Word ou image — max 10 MB</p>
+      </div>
+      <div class="cv-strip" id="cv-strip">
+        <div class="cv-strip-ico">📄</div>
+        <div class="cv-strip-info">
+          <div class="cv-strip-name" id="cv-name">—</div>
+          <div class="cv-strip-status">✅ CV chargé et analysé</div>
+        </div>
+        <button class="btn-x" onclick="removeCV()">✕</button>
+      </div>
+    </div>
+
+    <div class="card" id="cv-card" style="display:none">
+      <div class="card-hd">🧠 Profil détecté</div>
+      <div class="loading show" id="cv-load"><div class="spin"></div><span>Analyse du CV en cours…</span></div>
+      <div id="cv-result"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB SEARCH ═══════════════ -->
+  <div class="tab-panel" id="tab-search">
+    <div class="card">
+      <div class="card-hd">🔍 Recherche d'offres <span class="tag">via Claude Web Search</span></div>
+      <div class="search-row">
+        <input class="inp inp-q" id="q" placeholder="Ex: Data Analyst, Product Manager, UX Designer…" value="Data Analyst stage">
+        <input class="inp inp-loc" id="loc" placeholder="Lieu" value="Paris">
+        <button class="btn btn-neon" onclick="searchJobs()">🔍 Chercher</button>
+      </div>
+      <div class="loading" id="s-load" style="margin-top:14px"><div class="spin"></div><span id="s-msg">Recherche en cours…</span></div>
+    </div>
+    <div id="jobs-container">
+      <div class="empty"><div class="ei">🎯</div><p>Lance une recherche pour voir les offres</p></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB PASTE ═══════════════ -->
+  <div class="tab-panel" id="tab-paste">
+    <div class="card">
+      <div class="card-hd">📋 Coller une annonce <span class="tag">WTTJ · LinkedIn · HelloWork</span></div>
+      <p style="color:var(--fg2);font-size:.85rem;margin-bottom:13px">Copie-colle le texte complet d'une offre depuis n'importe quel site</p>
+      <textarea class="textarea" id="paste-txt" placeholder="Colle ici le texte de l'offre d'emploi…&#10;Titre du poste, description des missions, profil recherché, entreprise, lieu…" style="min-height:160px"></textarea>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-neon" onclick="analyzePaste()">⚡ Analyser cette offre</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('paste-txt').value=''">🗑 Effacer</button>
+      </div>
+    </div>
+    <div id="paste-result"></div>
+  </div>
+
+  <!-- ═══════════════ TAB PIPELINE ═══════════════ -->
+  <div class="tab-panel" id="tab-pipeline">
+    <div class="stats-row" id="stats-row">
+      <div class="stat-box"><div class="stat-num" id="st-total">0</div><div class="stat-lbl">Candidatures</div></div>
+      <div class="stat-box"><div class="stat-num" id="st-sent">0</div><div class="stat-lbl">Envoyées</div></div>
+      <div class="stat-box"><div class="stat-num" id="st-reply">0</div><div class="stat-lbl">Réponses</div></div>
+      <div class="stat-box"><div class="stat-num" id="st-rate" style="color:var(--neon3)">0%</div><div class="stat-lbl">Taux retour</div></div>
+    </div>
+    <div class="pipeline" id="pipeline-board"></div>
+  </div>
+
+  <!-- ═══════════════ TAB SETTINGS ═══════════════ -->
+  <div class="tab-panel" id="tab-settings">
+    <div class="card">
+      <div class="card-hd">⚙️ Paramètres</div>
+      <div class="srow">
+        <div><div class="slabel">🧠 Génération de lettre</div><div class="sdesc">Créer automatiquement la lettre de motivation</div></div>
+        <button class="tog on" id="tog-letter" onclick="this.classList.toggle('on')"></button>
+      </div>
+      <div class="srow">
+        <div><div class="slabel">📊 Score de compatibilité</div><div class="sdesc">Afficher le score de match CV ↔ offre</div></div>
+        <button class="tog on" id="tog-score" onclick="this.classList.toggle('on')"></button>
+      </div>
+      <div class="srow">
+        <div><div class="slabel">📧 Email de candidature</div><div class="sdesc">Générer un email prêt à envoyer</div></div>
+        <button class="tog on" id="tog-email" onclick="this.classList.toggle('on')"></button>
+      </div>
+      <div class="srow">
+        <div><div class="slabel">📌 Auto-ajout pipeline</div><div class="sdesc">Ajouter chaque offre analysée au pipeline</div></div>
+        <button class="tog on" id="tog-pipe" onclick="this.classList.toggle('on')"></button>
+      </div>
+      <div class="srow">
+        <div><div class="slabel">👤 Ton prénom</div><div class="sdesc">Pour personnaliser les lettres et emails</div></div>
+        <input class="inp-sm" id="s-name" placeholder="Prénom" value="Dioh">
+      </div>
+      <div class="srow">
+        <div><div class="slabel">📨 Ton email</div><div class="sdesc">Affiché dans les emails générés</div></div>
+        <input class="inp-sm" id="s-email" placeholder="ton@email.com">
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">💡 Guide rapide</div>
+      <div class="tips-grid">
+        <div class="tip-item">1. Entre ta clé API Anthropic (gratuit sur console.anthropic.com)</div>
+        <div class="tip-item">2. Upload ton CV (PDF ou image)</div>
+        <div class="tip-item">3. Lance une recherche ou colle une annonce</div>
+        <div class="tip-item">4. Clique "Analyser" → score + lettre + email générés</div>
+        <div class="tip-item">5. Suis tes candidatures dans le Pipeline</div>
+      </div>
+    </div>
+  </div>
+</div><!-- end .app -->
+
+<!-- MODAL ADD CANDIDATURE -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title">➕ Ajouter une candidature</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">✕ Fermer</button>
+    </div>
+    <div style="display:grid;gap:12px">
+      <div>
+        <div style="font-size:.78rem;color:var(--fg3);margin-bottom:5px">Intitulé du poste *</div>
+        <input class="inp" id="m-title" placeholder="Data Analyst" style="width:100%">
+      </div>
+      <div>
+        <div style="font-size:.78rem;color:var(--fg3);margin-bottom:5px">Entreprise *</div>
+        <input class="inp" id="m-company" placeholder="Nom de l'entreprise" style="width:100%">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div style="font-size:.78rem;color:var(--fg3);margin-bottom:5px">Statut</div>
+          <select class="inp" id="m-status" style="width:100%">
+            <option value="À postuler">À postuler</option>
+            <option value="Envoyé">Envoyé</option>
+            <option value="Relance">Relance</option>
+            <option value="Réponse">Réponse</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:.78rem;color:var(--fg3);margin-bottom:5px">Score</div>
+          <input class="inp" id="m-score" type="number" min="0" max="100" placeholder="75" style="width:100%">
+        </div>
+      </div>
+      <div>
+        <div style="font-size:.78rem;color:var(--fg3);margin-bottom:5px">Notes</div>
+        <textarea class="textarea" id="m-notes" placeholder="Notes, lien, contacts…" style="min-height:80px"></textarea>
+      </div>
+      <button class="btn btn-neon" onclick="saveCandidate()">💾 Ajouter au pipeline</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let cvText = '';
+let cvBase64 = '';
+let cvMediaType = '';
+let jobsData = [];
+let pipeline = JSON.parse(localStorage.getItem('jb_pipeline') || '[]');
+
+const COLS = [
+  { id: 'À postuler', label: 'À postuler', color: '#6060a0' },
+  { id: 'Envoyé',     label: 'Envoyé',     color: '#7c6dfa' },
+  { id: 'Relance',    label: 'Relance',     color: '#fac96d' },
+  { id: 'Réponse',    label: 'Réponse',    color: '#6dfac8' }
+];
+
+// ═══════════════════════════════════════════════════════
+//  API KEY
+// ═══════════════════════════════════════════════════════
+function getKey() { return document.getElementById('api-key').value.trim(); }
+
+function checkApiKey() {
+  const k = getKey();
+  const el = document.getElementById('api-status');
+  if (k.startsWith('sk-ant-') && k.length > 20) {
+    el.className = 'api-status ok';
+    el.innerHTML = '<div class="api-dot"></div><span>Connecté</span>';
+  } else {
+    el.className = 'api-status';
+    el.innerHTML = '<div class="api-dot"></div><span>Non connecté</span>';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════════
+function switchTab(name) {
+  const tabs = ['cv','search','paste','pipeline','settings'];
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', tabs[i] === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name === 'pipeline') renderPipeline();
+}
+
+// ═══════════════════════════════════════════════════════
+//  CV UPLOAD
+// ═══════════════════════════════════════════════════════
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) { document.getElementById('cv-file').files = e.dataTransfer.files; handleCV(document.getElementById('cv-file')); }
+});
+
+async function handleCV(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (!getKey()) { alert('⚠️ Entre d\'abord ta clé API Anthropic en haut de la page !'); return; }
+
+  document.getElementById('cv-name').textContent = file.name;
+  document.getElementById('cv-strip').classList.add('show');
+  document.getElementById('cv-card').style.display = 'block';
+  document.getElementById('cv-load').classList.add('show');
+  document.getElementById('cv-result').innerHTML = '';
+
+  try {
+    const b64 = await toBase64(file);
+    cvBase64 = b64;
+    cvMediaType = file.type;
+
+    let messages;
+    if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+      const ctype = file.type === 'application/pdf' ? 'document' : 'image';
+      messages = [{ role:'user', content:[
+        { type:ctype, source:{ type:'base64', media_type:file.type, data:b64 } },
+        { type:'text', text:CV_PROMPT }
+      ]}];
+    } else {
+      const text = await file.text();
+      messages = [{ role:'user', content: CV_PROMPT + '\n\nCV:\n' + text }];
+    }
+
+    const res = await claude(messages);
+    const data = parseJSON(res);
+    cvText = JSON.stringify(data);
+    renderCV(data);
+  } catch(e) {
+    document.getElementById('cv-load').classList.remove('show');
+    document.getElementById('cv-result').innerHTML = `<p style="color:var(--neon2);font-size:.85rem">Erreur: ${e.message}</p>`;
+  }
+}
+
+const CV_PROMPT = `Analyse ce CV et retourne UNIQUEMENT un JSON avec ces champs:
+{
+  "nom": "prénom nom complet",
+  "titre": "titre professionnel actuel ou recherché",
+  "formation": "formation principale avec école et année",
+  "resume_profil": "2-3 phrases synthétisant le profil",
+  "competences_techniques": ["liste exhaustive"],
+  "competences_soft": ["liste"],
+  "experiences": ["exp1 - entreprise - durée", "exp2"],
+  "langues": ["Français - Natif", "Anglais - B2"],
+  "disponibilite": "date ou immédiat"
+}
+Réponds UNIQUEMENT avec le JSON brut, sans markdown.`;
+
+function renderCV(d) {
+  document.getElementById('cv-load').classList.remove('show');
+  document.getElementById('cv-result').innerHTML = `
+    <div style="margin-bottom:16px">
+      <div class="profile-label">Candidat</div>
+      <div class="profile-name">${d.nom||'—'}</div>
+      ${d.titre ? `<div style="color:var(--fg2);font-size:.88rem;margin-top:3px">${d.titre}</div>` : ''}
+      ${d.disponibilite ? `<div style="font-size:.78rem;color:var(--neon3);margin-top:4px">📅 Disponibilité : ${d.disponibilite}</div>` : ''}
+    </div>
+    <div class="profile-grid">
+      <div>
+        <div class="profile-label">💻 Compétences techniques</div>
+        <div class="chips">${(d.competences_techniques||[]).map(c=>`<span class="chip chip-tech">${c}</span>`).join('')}</div>
+      </div>
+      <div>
+        <div class="profile-label">🌍 Langues</div>
+        <div class="chips">${(d.langues||[]).map(l=>`<span class="chip chip-lang">${l}</span>`).join('')}</div>
+        ${(d.competences_soft||[]).length ? `<div class="profile-label" style="margin-top:12px">🤝 Soft skills</div><div class="chips">${d.competences_soft.map(c=>`<span class="chip chip-soft">${c}</span>`).join('')}</div>` : ''}
+      </div>
+      <div>
+        <div class="profile-label">💼 Expériences</div>
+        <ul class="exp-list">${(d.experiences||[]).map(e=>`<li class="exp-item">${e}</li>`).join('')}</ul>
+      </div>
+      <div>
+        <div class="profile-label">🎓 Formation</div>
+        <div style="font-size:.85rem;color:var(--fg2)">${d.formation||'—'}</div>
+      </div>
+      ${d.resume_profil ? `<div class="profile-summary">${d.resume_profil}</div>` : ''}
+    </div>`;
+}
+
+function removeCV() {
+  cvText=''; cvBase64=''; cvMediaType='';
+  document.getElementById('cv-strip').classList.remove('show');
+  document.getElementById('cv-card').style.display='none';
+  document.getElementById('cv-file').value='';
+}
+
+// ═══════════════════════════════════════════════════════
+//  JOB SEARCH  (Claude web_search)
+// ═══════════════════════════════════════════════════════
+async function searchJobs() {
+  const q = document.getElementById('q').value.trim();
+  const loc = document.getElementById('loc').value.trim();
+  if (!q) return;
+  if (!getKey()) { alert('⚠️ Entre ta clé API Anthropic !'); return; }
+
+  document.getElementById('s-load').classList.add('show');
+  document.getElementById('s-msg').textContent = 'Recherche en cours…';
+  document.getElementById('jobs-container').innerHTML = '';
+
+  try {
+    const prompt = `Recherche des offres d'emploi récentes pour "${q}" à "${loc||'France'}" sur Indeed, LinkedIn, WTTJ ou autres jobboards.
+Retourne un JSON array de 6-8 offres récentes avec ces champs:
+[{
+  "title": "intitulé exact",
+  "company": "entreprise",
+  "location": "ville",
+  "salary": "salaire si mentionné ou null",
+  "posted": "date approximative",
+  "url": "url de l'offre si trouvée",
+  "description": "résumé des missions en 2-3 phrases",
+  "type": "CDI/CDD/Stage/Alternance"
+}]
+Réponds UNIQUEMENT avec le JSON array.`;
+
+    const res = await claudeWithSearch([{ role:'user', content:prompt }]);
+    document.getElementById('s-load').classList.remove('show');
+
+    let jobs = [];
+    try {
+      const clean = res.replace(/```json|```/g,'').trim();
+      const m = clean.match(/\[[\s\S]*\]/);
+      if (m) jobs = JSON.parse(m[0]);
+    } catch(e) { /* ignore parse error */ }
+
+    jobsData = jobs;
+    renderJobs(jobs);
+    document.getElementById('ndot').style.display = jobs.length ? 'inline-block' : 'none';
+  } catch(e) {
+    document.getElementById('s-load').classList.remove('show');
+    document.getElementById('jobs-container').innerHTML = `<div class="empty"><div class="ei">⚠️</div><p>Erreur : ${e.message}</p></div>`;
+  }
+}
+
+function renderJobs(jobs) {
+  if (!jobs || !jobs.length) {
+    document.getElementById('jobs-container').innerHTML = `<div class="empty"><div class="ei">🔍</div><p>Aucun résultat. Essaie d'autres mots-clés.</p></div>`;
+    return;
+  }
+  document.getElementById('jobs-container').innerHTML = `<div class="jobs-grid">${jobs.map((j,i) => `
+    <div class="jc" id="jc-${i}">
+      <div class="jc-top">
+        <div class="jc-left">
+          <div class="jc-title">${j.title||'Poste'}</div>
+          <div class="jc-company">${j.company||'—'}</div>
+        </div>
+        ${cvText ? `<div class="score-ring sr-md" id="sr-${i}">?</div>` : ''}
+      </div>
+      <div class="jc-meta">
+        <span class="badge b-loc">📍 ${j.location||'—'}</span>
+        ${j.type ? `<span class="badge b-date">${j.type}</span>` : ''}
+        ${j.salary ? `<span class="badge b-sal">💰 ${j.salary}</span>` : ''}
+        ${j.posted ? `<span class="badge b-date">📅 ${j.posted}</span>` : ''}
+      </div>
+      ${j.description ? `<div class="jc-snippet">${j.description}</div>` : ''}
+      <div class="jc-actions">
+        <button class="btn btn-neon btn-sm" onclick="analyzeJob(${i})">⚡ Analyser & Adapter</button>
+        ${j.url ? `<a href="${j.url}" target="_blank" class="btn btn-ghost btn-sm">🔗 Voir l'offre</a>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="quickAddPipeline(${i})">➕ Pipeline</button>
+      </div>
+      <div class="res-panel" id="rp-${i}"></div>
+    </div>`).join('')}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  ANALYZE JOB
+// ═══════════════════════════════════════════════════════
+async function analyzeJob(i) {
+  if (!cvText) { alert('⚠️ Upload ton CV d\'abord !'); return; }
+  const job = jobsData[i];
+  const panel = document.getElementById(`rp-${i}`);
+  panel.classList.add('show');
+  panel.innerHTML = `<div class="loading show"><div class="spin"></div><span>Analyse en cours…</span></div>`;
+
+  const name = document.getElementById('s-name').value || 'Dioh';
+  const genLetter = document.getElementById('tog-letter').classList.contains('on');
+  const genScore  = document.getElementById('tog-score').classList.contains('on');
+  const genEmail  = document.getElementById('tog-email').classList.contains('on');
+  const autoPipe  = document.getElementById('tog-pipe').classList.contains('on');
+
+  try {
+    const prompt = buildAnalyzePrompt(cvText, job.title, job.company, job.location, job.description, name, genLetter, genScore, genEmail);
+    const res = await claude([{ role:'user', content:prompt }]);
+    const data = parseJSON(res);
+
+    if (genScore && data.score !== undefined) {
+      const ring = document.getElementById(`sr-${i}`);
+      if (ring) {
+        ring.textContent = data.score + '%';
+        ring.className = 'score-ring ' + scoreClass(data.score);
+      }
+    }
+
+    renderResult(panel, data, genLetter, genEmail, job);
+
+    if (autoPipe) {
+      addToPipeline({ title:job.title, company:job.company, score:data.score, status:'À postuler' });
+    }
+  } catch(e) {
+    panel.innerHTML = `<p style="color:var(--neon2);font-size:.83rem">Erreur: ${e.message}</p>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  ANALYZE PASTE
+// ═══════════════════════════════════════════════════════
+async function analyzePaste() {
+  const txt = document.getElementById('paste-txt').value.trim();
+  if (!txt) { alert('Colle d\'abord une annonce !'); return; }
+  if (!cvText) { alert('⚠️ Upload ton CV d\'abord !'); return; }
+  if (!getKey()) { alert('⚠️ Entre ta clé API Anthropic !'); return; }
+
+  const rd = document.getElementById('paste-result');
+  rd.innerHTML = `<div class="card"><div class="loading show"><div class="spin"></div><span>Analyse de l'annonce…</span></div></div>`;
+
+  const name = document.getElementById('s-name').value || 'Dioh';
+  const genLetter = document.getElementById('tog-letter').classList.contains('on');
+  const genEmail  = document.getElementById('tog-email').classList.contains('on');
+  const autoPipe  = document.getElementById('tog-pipe').classList.contains('on');
+
+  try {
+    const titlePrompt = `Tu es expert RH. Profil candidat: ${cvText}\n\nAnnonce:\n${txt}\n\nGénère un JSON:
+{
+  "score": nombre 0-100,
+  "titre_poste": "titre",
+  "entreprise": "entreprise",
+  "match_points": [{"ok":true/false,"point":"description"}],
+  "resume_offre": "2-3 phrases",
+  ${genLetter ? `"lettre": "lettre de motivation complète personnalisée pour ${name}",` : ''}
+  ${genEmail ? `"email_objet": "objet mail", "email_corps": "corps mail candidature",` : ''}
+  "conseils": ["conseil1","conseil2","conseil3"]
+}
+Réponds UNIQUEMENT avec le JSON brut.`;
+
+    const res = await claude([{ role:'user', content:titlePrompt }]);
+    const data = parseJSON(res);
+
+    const sc = scoreClass(data.score);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'card';
+    wrapper.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <div>
+          <div style="font-family:'Clash Display',sans-serif;font-size:1.1rem;font-weight:600">${data.titre_poste||'Poste'}</div>
+          <div style="color:var(--neon);font-size:.85rem;margin-top:2px">${data.entreprise||'—'}</div>
+        </div>
+        <div class="score-ring ${sc}" style="position:static">${data.score}%</div>
+      </div>`;
+
+    const fakeJob = { title:data.titre_poste, company:data.entreprise };
+    const inner = document.createElement('div');
+    renderResult(inner, data, genLetter, genEmail, fakeJob);
+    wrapper.appendChild(inner);
+    rd.innerHTML = '';
+    rd.appendChild(wrapper);
+
+    if (autoPipe) {
+      addToPipeline({ title:data.titre_poste, company:data.entreprise, score:data.score, status:'À postuler' });
+    }
+  } catch(e) {
+    rd.innerHTML = `<div class="card"><p style="color:var(--neon2)">Erreur: ${e.message}</p></div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER RESULT
+// ═══════════════════════════════════════════════════════
+function renderResult(panel, data, genLetter, genEmail, job) {
+  let h = '';
+
+  if (data.resume_offre) {
+    h += `<div class="res-sec"><div class="res-lbl">📋 Résumé de l'offre</div><div class="res-box">${data.resume_offre}</div></div>`;
+  }
+
+  if (data.match_points?.length) {
+    h += `<div class="res-sec"><div class="res-lbl">🎯 Match CV ↔ Offre</div>
+      <ul class="match-list">${data.match_points.map(m=>`
+        <li class="match-li"><div class="mdot ${m.ok?'mdot-y':'mdot-n'}"></div><span>${m.point}</span></li>`).join('')}
+      </ul></div>`;
+  }
+
+  if (genLetter && data.lettre) {
+    const esc = escape(data.lettre);
+    h += `<div class="res-sec"><div class="res-lbl">✉️ Lettre de motivation
+      <button class="btn btn-ghost btn-xs" onclick="copyTxt(this,'${esc}')">📋 Copier</button></div>
+      <div class="res-box">${data.lettre}</div></div>`;
+  }
+
+  if (genEmail && data.email_objet) {
+    const esc = escape(data.email_objet + '\n\n' + data.email_corps);
+    h += `<div class="res-sec"><div class="res-lbl">📨 Email de candidature
+      <button class="btn btn-ghost btn-xs" onclick="copyTxt(this,'${esc}')">📋 Copier</button></div>
+      <div class="email-prev">
+        <div class="email-row"><span class="email-lbl">Objet :</span><span class="email-val">${data.email_objet}</span></div>
+        <div class="email-body">${data.email_corps}</div>
+      </div></div>`;
+  }
+
+  if (data.conseils?.length) {
+    h += `<div class="res-sec"><div class="res-lbl">💡 Conseils</div>
+      <div class="tips-grid">${data.conseils.map(c=>`<div class="tip-item">${c}</div>`).join('')}</div></div>`;
+  }
+
+  panel.innerHTML = h;
+}
+
+function escape(str) { return encodeURIComponent(str||''); }
+
+function copyTxt(btn, encoded) {
+  navigator.clipboard.writeText(decodeURIComponent(encoded)).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copié !';
+    setTimeout(() => btn.textContent = orig, 2000);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  PIPELINE
+// ═══════════════════════════════════════════════════════
+function renderPipeline() {
+  const board = document.getElementById('pipeline-board');
+  board.innerHTML = COLS.map(col => {
+    const cards = pipeline.filter(c => c.status === col.id);
+    return `<div class="pipe-col" id="col-${col.id}">
+      <div class="pipe-col-hd">
+        <div class="pipe-dot" style="background:${col.color}"></div>
+        ${col.label}
+        <div class="pipe-count" id="cnt-${col.id}">${cards.length}</div>
+      </div>
+      <div id="cards-${col.id}">
+        ${cards.map(c => candHTML(c)).join('')}
+      </div>
+      <button class="add-cand-btn" onclick="openModal('${col.id}')">+ Ajouter</button>
+    </div>`;
+  }).join('');
+  updateStats();
+}
+
+function candHTML(c) {
+  const sm = c.score !== undefined ? `<span class="score-mini ${scoreClass(c.score).replace('sr-','sm-')}">${c.score}%</span>` : '';
+  const date = c.date ? `<div class="cand-card-date">${c.date}</div>` : '';
+  return `<div class="cand-card" draggable="true" data-id="${c.id}">
+    <div class="cand-card-title">${c.title||'Poste'}</div>
+    <div class="cand-card-co">${c.company||'—'}</div>
+    ${sm}${date}
+    <button class="cand-del" onclick="deleteCand(${c.id})">✕</button>
+  </div>`;
+}
+
+function addToPipeline(obj) {
+  pipeline.push({ ...obj, id: Date.now(), date: new Date().toLocaleDateString('fr') });
+  savePipeline();
+  if (document.getElementById('tab-pipeline').classList.contains('active')) renderPipeline();
+}
+
+function savePipeline() { localStorage.setItem('jb_pipeline', JSON.stringify(pipeline)); }
+
+function deleteCand(id) {
+  pipeline = pipeline.filter(c => c.id !== id);
+  savePipeline();
+  renderPipeline();
+}
+
+function quickAddPipeline(i) {
+  const j = jobsData[i];
+  addToPipeline({ title:j.title, company:j.company, status:'À postuler' });
+  const btn = event.target;
+  btn.textContent = '✅ Ajouté';
+  setTimeout(() => btn.textContent = '➕ Pipeline', 2000);
+}
+
+function updateStats() {
+  const total = pipeline.length;
+  const sent  = pipeline.filter(c => ['Envoyé','Relance','Réponse'].includes(c.status)).length;
+  const reply = pipeline.filter(c => c.status === 'Réponse').length;
+  const rate  = sent > 0 ? Math.round(reply/sent*100) : 0;
+  document.getElementById('st-total').textContent = total;
+  document.getElementById('st-sent').textContent  = sent;
+  document.getElementById('st-reply').textContent = reply;
+  document.getElementById('st-rate').textContent  = rate + '%';
+}
+
+// Modal
+function openModal(status) {
+  document.getElementById('m-status').value = status || 'À postuler';
+  document.getElementById('m-title').value = '';
+  document.getElementById('m-company').value = '';
+  document.getElementById('m-score').value = '';
+  document.getElementById('m-notes').value = '';
+  document.getElementById('add-modal').classList.add('show');
+}
+function closeModal() { document.getElementById('add-modal').classList.remove('show'); }
+function saveCandidate() {
+  const title = document.getElementById('m-title').value.trim();
+  const company = document.getElementById('m-company').value.trim();
+  if (!title || !company) { alert('Titre et entreprise requis'); return; }
+  addToPipeline({
+    title, company,
+    status: document.getElementById('m-status').value,
+    score: parseInt(document.getElementById('m-score').value)||undefined,
+    notes: document.getElementById('m-notes').value
+  });
+  closeModal();
+  renderPipeline();
+}
+document.getElementById('add-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// Drag & drop pipeline
+document.addEventListener('dragstart', e => {
+  const card = e.target.closest('.cand-card');
+  if (card) e.dataTransfer.setData('text/plain', card.dataset.id);
+});
+document.addEventListener('dragover', e => {
+  const col = e.target.closest('.pipe-col');
+  if (col) e.preventDefault();
+});
+document.addEventListener('drop', e => {
+  const col = e.target.closest('.pipe-col');
+  if (!col) return;
+  const id = parseInt(e.dataTransfer.getData('text/plain'));
+  const colId = col.id.replace('col-','');
+  const cand = pipeline.find(c => c.id === id);
+  if (cand) { cand.status = colId; savePipeline(); renderPipeline(); }
+});
+
+// ═══════════════════════════════════════════════════════
+//  CLAUDE API HELPERS
+// ═══════════════════════════════════════════════════════
+async function claude(messages, extra={}) {
+  const key = getKey();
+  if (!key) throw new Error('Clé API manquante — configure-la en haut de la page');
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key': key,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:2500,
+      messages,
+      ...extra
+    })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+}
+
+async function claudeWithSearch(messages) {
+  return claude(messages, {
+    tools:[{ type:'web_search_20250305', name:'web_search' }]
+  });
+}
+
+function parseJSON(str) {
+  const clean = str.replace(/```json|```/g,'').trim();
+  const m = clean.match(/[\[{][\s\S]*[\]}]/);
+  if (!m) throw new Error('Réponse invalide du modèle');
+  return JSON.parse(m[0]);
+}
+
+function buildAnalyzePrompt(cv, title, company, location, desc, name, letter, score, email) {
+  return `Tu es un expert RH & coach carrière. Voici le profil du candidat (JSON extrait du CV):
+${cv}
+
+Offre :
+Titre: ${title}
+Entreprise: ${company}
+Lieu: ${location||''}
+Description: ${desc||'Non fournie'}
+
+Génère un JSON avec ces champs:
+{
+  ${score ? '"score": nombre entre 0 et 100 représentant la compatibilité CV/offre,' : ''}
+  "match_points": [{"ok":true/false,"point":"explication précise du point de match ou écart"}],
+  "resume_offre": "2-3 phrases synthétisant les missions clés et le profil recherché",
+  ${letter ? `"lettre": "Lettre de motivation complète (400-500 mots) personnalisée pour ${name}, en vouvoyement, structurée en 3 paragraphes, mettant en avant les points de match, ton naturel mais professionnel",` : ''}
+  ${email ? `"email_objet": "Objet de l'email de candidature", "email_corps": "Corps complet de l'email de candidature (100-150 mots) pour ${name}",` : ''}
+  "conseils": ["conseil actionnable 1","conseil actionnable 2","conseil actionnable 3"]
+}
+Réponds UNIQUEMENT avec le JSON brut, sans markdown ni commentaires.`;
+}
+
+function scoreClass(s) {
+  if (!s && s !== 0) return 'sr-md';
+  return s >= 70 ? 'sr-hi' : s >= 45 ? 'sr-md' : 'sr-lo';
+}
+
+function toBase64(file) {
+  return new Promise((res,rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// Init pipeline
+renderPipeline();
+</script>
+</body>
+</html>
